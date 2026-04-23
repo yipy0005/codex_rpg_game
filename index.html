@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Computational Drug Hunter - Maple Style</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="frame">
+      <header class="topbar">
+        <h1>Computational Drug Hunter</h1>
+        <p>Maple-inspired side-scrolling action demo</p>
+      </header>
+
+      <section class="hud">
+        <div class="stat"><span>Role</span><strong id="role">Data Explorer</strong></div>
+        <div class="stat"><span>HP</span><strong id="hp">100 / 100</strong></div>
+        <div class="stat"><span>XP</span><strong id="xp">0 / 100</strong></div>
+        <div class="stat"><span>Level</span><strong id="level">1</strong></div>
+        <div class="stat"><span>Potions</span><strong id="potions">3</strong></div>
+      </section>
+
+      <section class="game-wrap">
+        <canvas id="game" width="1100" height="620" aria-label="2d action game"></canvas>
+        <div class="overlay" id="overlay">
+          <h2>Mission Controls</h2>
+          <p>Move: <kbd>A</kbd>/<kbd>D</kbd> or <kbd>←</kbd>/<kbd>→</kbd> &nbsp; Jump: <kbd>W</kbd>/<kbd>Space</kbd></p>
+          <p>Attack: <kbd>J</kbd> &nbsp; Heal: <kbd>H</kbd> &nbsp; Restart: <kbd>R</kbd></p>
+          <p>Defeat data-monsters and reach Lead Discovery Master.</p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Enemy Types</h2>
+        <ul>
+          <li>Noisy Data Slime</li>
+          <li>Overfit Bat</li>
+          <li>False Positive Mimic</li>
+        </ul>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
