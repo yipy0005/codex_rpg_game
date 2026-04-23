@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Computational Drug Hunter RPG</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <header class="hero-banner">
+        <p class="kicker">ANATOMY OF A</p>
+        <h1><span>COMPUTATIONAL</span><br /><span>DRUG HUNTER</span></h1>
+        <p class="subtitle">Maple-style action stage with chibi companions, bright panels, and combo combat.</p>
+      </header>
+
+      <section class="hud-grid">
+        <article class="card stats-card">
+          <h2>Trainer Stats</h2>
+          <ul>
+            <li><span>Role</span><strong id="role">Data Explorer</strong></li>
+            <li><span>HP</span><strong id="hp">120 / 120</strong></li>
+            <li><span>XP</span><strong id="xp">0 / 120</strong></li>
+            <li><span>Level</span><strong id="level">1</strong></li>
+            <li><span>Potions</span><strong id="potions">3</strong></li>
+          </ul>
+        </article>
+
+        <article class="card game-card">
+          <canvas id="game" width="1200" height="620" aria-label="Maple style stage"></canvas>
+          <div class="controls" id="controls">
+            <p><kbd>A</kbd>/<kbd>D</kbd> Move · <kbd>W</kbd>/<kbd>Space</kbd> Jump · <kbd>J</kbd> Attack · <kbd>K</kbd> Skill · <kbd>H</kbd> Heal · <kbd>R</kbd> Restart</p>
+          </div>
+        </article>
+
+        <article class="card gear-card">
+          <h2>Field Gear</h2>
+          <ul>
+            <li>Data Compass</li>
+            <li>Docking Gauntlet</li>
+            <li>Simulation Device</li>
+            <li>Toolkit Belt</li>
+          </ul>
+          <h3>Companions</h3>
+          <p>Solvy (chem) + Bytee (data)</p>
+        </article>
+      </section>
+
+      <section class="skill-row">
+        <div class="chip">Library Curation</div>
+        <div class="chip">Virtual Screening</div>
+        <div class="chip">Docking Strike</div>
+        <div class="chip">ADMET Scan</div>
+        <div class="chip">Molecular Dynamics</div>
+        <div class="chip">Lead Optimization</div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

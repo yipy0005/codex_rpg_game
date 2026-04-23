@@ -1,0 +1,124 @@
+:root {
+  --bg: #071327;
+  --sky: #8ad6ff;
+  --panel: #fff5dd;
+  --line: #193a60;
+  --ink: #0f2740;
+  --gold: #ffcc4f;
+  --cyan: #4de4ff;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  color: #eaf6ff;
+  background: radial-gradient(circle at top, #224f86 0%, var(--bg) 68%);
+}
+
+.layout {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.hero-banner {
+  border: 3px solid var(--gold);
+  border-radius: 20px;
+  background: linear-gradient(180deg, #0f2644, #102d53);
+  padding: 0.8rem 1rem;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.kicker { margin: 0; letter-spacing: 0.2em; font-weight: 800; color: #ffe7a0; }
+.hero-banner h1 { margin: 0.2rem 0; line-height: 0.94; }
+.hero-banner h1 span:first-child { color: #ffd347; font-size: clamp(1.8rem, 5vw, 3.5rem); }
+.hero-banner h1 span:last-child { color: #72f0ff; font-size: clamp(1.9rem, 5vw, 3.8rem); }
+.subtitle { margin: 0; font-size: 0.95rem; color: #cfeaff; }
+
+.hud-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 250px 1fr 250px;
+}
+
+.card {
+  border: 3px solid var(--line);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fffef8, var(--panel));
+  color: var(--ink);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+}
+
+.stats-card, .gear-card { padding: 0.8rem; }
+.card h2, .card h3 { margin: 0 0 0.55rem; color: #124578; }
+.card ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.4rem; }
+
+.stats-card li {
+  display: flex;
+  justify-content: space-between;
+  border: 1px solid #abcde8;
+  background: #f4fbff;
+  border-radius: 8px;
+  padding: 0.35rem 0.45rem;
+}
+
+.game-card {
+  position: relative;
+  overflow: hidden;
+  background: #9cdcff;
+}
+
+#game {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+}
+
+.controls {
+  position: absolute;
+  left: 0.6rem;
+  top: 0.6rem;
+  color: #f3fbff;
+  background: rgba(9, 26, 47, 0.75);
+  border: 1px solid #86cdff;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  padding: 0.35rem 0.5rem;
+}
+
+.controls p { margin: 0; }
+kbd {
+  border: 1px solid #78beff;
+  border-bottom-width: 2px;
+  background: #18365b;
+  color: #e7f6ff;
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+
+.skill-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.55rem;
+}
+
+.chip {
+  border: 2px solid #1b4d81;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #f7fbff, #e3f3ff);
+  color: #0f3b66;
+  text-align: center;
+  padding: 0.55rem 0.35rem;
+  font-weight: 700;
+}
+
+@media (max-width: 1080px) {
+  .hud-grid { grid-template-columns: 1fr; }
+  .skill-row { grid-template-columns: repeat(2, 1fr); }
+}
