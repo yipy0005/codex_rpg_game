@@ -3,63 +3,41 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Computational Drug Hunter RPG</title>
+    <title>Computational Drug Hunter - Maple Style</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <main class="game-shell">
-      <header>
+    <main class="frame">
+      <header class="topbar">
         <h1>Computational Drug Hunter</h1>
-        <p>Battle scientific chaos, discover compounds, and become a Lead Discovery Master.</p>
+        <p>Maple-inspired side-scrolling action demo</p>
       </header>
 
       <section class="hud">
-        <article class="panel">
-          <h2>Hunter</h2>
-          <p id="player-level">Level 1</p>
-          <p id="player-hp">HP: 100 / 100</p>
-          <p id="player-energy">Energy: 5</p>
-          <p id="player-xp">XP: 0 / 100</p>
-        </article>
-
-        <article class="panel">
-          <h2>Companions</h2>
-          <ul>
-            <li><strong>Solvy</strong> (Chemistry): boosts docking and synthesis actions.</li>
-            <li><strong>Bytee</strong> (Data): boosts curation and modeling actions.</li>
-          </ul>
-        </article>
-
-        <article class="panel">
-          <h2>Current Threat</h2>
-          <p id="enemy-name">No active threat</p>
-          <p id="enemy-hp">HP: --</p>
-          <p id="enemy-weakness">Weak to: --</p>
-        </article>
+        <div class="stat"><span>Role</span><strong id="role">Data Explorer</strong></div>
+        <div class="stat"><span>HP</span><strong id="hp">100 / 100</strong></div>
+        <div class="stat"><span>XP</span><strong id="xp">0 / 100</strong></div>
+        <div class="stat"><span>Level</span><strong id="level">1</strong></div>
+        <div class="stat"><span>Potions</span><strong id="potions">3</strong></div>
       </section>
 
-      <section class="battlefield">
-        <h2>Core Moves</h2>
-        <div id="moves" class="moves"></div>
-        <div class="actions">
-          <button id="spawn-btn">Find New Challenge</button>
-          <button id="rest-btn">Rest (Recover HP/Energy)</button>
+      <section class="game-wrap">
+        <canvas id="game" width="1100" height="620" aria-label="2d action game"></canvas>
+        <div class="overlay" id="overlay">
+          <h2>Mission Controls</h2>
+          <p>Move: <kbd>A</kbd>/<kbd>D</kbd> or <kbd>←</kbd>/<kbd>→</kbd> &nbsp; Jump: <kbd>W</kbd>/<kbd>Space</kbd></p>
+          <p>Attack: <kbd>J</kbd> &nbsp; Heal: <kbd>H</kbd> &nbsp; Restart: <kbd>R</kbd></p>
+          <p>Defeat data-monsters and reach Lead Discovery Master.</p>
         </div>
       </section>
 
-      <section class="panel progression">
-        <h2>Evolution Path</h2>
-        <ol>
-          <li>Data Explorer (Level 1)</li>
-          <li>Model Trainer (Level 3)</li>
-          <li>Virtual Screening Ace (Level 5)</li>
-          <li>Lead Discovery Master (Level 8)</li>
-        </ol>
-      </section>
-
-      <section class="panel log-panel">
-        <h2>Mission Log</h2>
-        <div id="log" class="log"></div>
+      <section class="panel">
+        <h2>Enemy Types</h2>
+        <ul>
+          <li>Noisy Data Slime</li>
+          <li>Overfit Bat</li>
+          <li>False Positive Mimic</li>
+        </ul>
       </section>
     </main>
 
