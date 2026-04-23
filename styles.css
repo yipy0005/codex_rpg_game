@@ -1,0 +1,118 @@
+:root {
+  color-scheme: dark;
+  --bg: #071428;
+  --panel: #0f2742;
+  --panel-border: #4db4ff;
+  --accent: #ffc84b;
+  --text: #ecf6ff;
+  --danger: #ff7e7e;
+  --good: #7fffbe;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  background: radial-gradient(circle at top, #1b3f6d, var(--bg) 60%);
+  color: var(--text);
+}
+
+.game-shell {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1rem;
+  display: grid;
+  gap: 1rem;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+header {
+  text-align: center;
+  padding: 1rem;
+  border: 2px solid var(--accent);
+  background: linear-gradient(135deg, #173358, #0f2742);
+  border-radius: 16px;
+}
+
+.hud {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.panel {
+  border: 2px solid var(--panel-border);
+  border-radius: 14px;
+  padding: 0.9rem;
+  background: color-mix(in srgb, var(--panel) 92%, black);
+}
+
+.moves {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.6rem;
+  margin: 0.8rem 0;
+}
+
+.move-btn,
+button {
+  border: 2px solid var(--panel-border);
+  border-radius: 10px;
+  padding: 0.65rem;
+  color: var(--text);
+  background: #12375c;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.move-btn:hover,
+button:hover {
+  filter: brightness(1.1);
+}
+
+button:disabled,
+.move-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.log-panel {
+  min-height: 200px;
+}
+
+.log {
+  margin-top: 0.7rem;
+  max-height: 280px;
+  overflow: auto;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.log-entry {
+  border-left: 4px solid var(--panel-border);
+  background: #0d243f;
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+}
+
+.log-entry.good {
+  border-left-color: var(--good);
+}
+
+.log-entry.bad {
+  border-left-color: var(--danger);
+}
