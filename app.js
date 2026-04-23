@@ -7,171 +7,164 @@ const ui = {
   xp: document.querySelector("#xp"),
   level: document.querySelector("#level"),
   potions: document.querySelector("#potions"),
-  overlay: document.querySelector("#overlay"),
+  controls: document.querySelector("#controls"),
 };
 
 const world = {
-  width: 3200,
-  gravity: 0.65,
-  floorY: 520,
+  width: 3400,
+  floor: 525,
+  gravity: 0.62,
   platforms: [
-    { x: 260, y: 455, w: 190, h: 18 },
-    { x: 640, y: 400, w: 220, h: 18 },
-    { x: 1040, y: 460, w: 210, h: 18 },
-    { x: 1430, y: 385, w: 240, h: 18 },
-    { x: 1840, y: 445, w: 180, h: 18 },
-    { x: 2300, y: 370, w: 250, h: 18 },
-    { x: 2710, y: 435, w: 220, h: 18 },
+    { x: 320, y: 445, w: 210, h: 20 },
+    { x: 700, y: 395, w: 245, h: 20 },
+    { x: 1130, y: 460, w: 220, h: 20 },
+    { x: 1530, y: 370, w: 260, h: 20 },
+    { x: 1970, y: 435, w: 240, h: 20 },
+    { x: 2450, y: 355, w: 280, h: 20 },
+    { x: 2920, y: 430, w: 250, h: 20 },
   ],
 };
 
+const roles = ["Data Explorer", "Model Trainer", "Virtual Screening Ace", "Lead Discovery Master"];
+
 const player = {
   x: 120,
-  y: 100,
-  w: 52,
-  h: 72,
+  y: 160,
+  w: 56,
+  h: 96,
   vx: 0,
   vy: 0,
-  speed: 4.2,
-  jump: -13,
   facing: 1,
+  speed: 4.6,
+  jump: -13.5,
   onGround: false,
-  attackCooldown: 0,
-  hitCooldown: 0,
-  level: 1,
+  hp: 120,
+  maxHp: 120,
   xp: 0,
-  xpNeed: 100,
-  hp: 100,
-  maxHp: 100,
+  xpNeed: 120,
+  level: 1,
+  role: roles[0],
   potions: 3,
-  role: "Data Explorer",
+  attackCD: 0,
+  skillCD: 0,
+  hurtCD: 0,
 };
 
-const roles = [
-  "Data Explorer",
-  "Model Trainer",
-  "Virtual Screening Ace",
-  "Lead Discovery Master",
-];
-
-const keys = new Set();
 const enemies = [];
 const particles = [];
+const keys = new Set();
 let cameraX = 0;
-let gameOver = false;
+let done = false;
 
-function spawnEnemy(x) {
-  const roll = Math.random();
-  const type = roll < 0.35 ? "slime" : roll < 0.7 ? "bat" : "mimic";
-  const base = {
-    slime: { name: "Noisy Data Slime", hp: 24, speed: 1.2, color: "#74ff99", dmg: 8, w: 52, h: 38 },
-    bat: { name: "Overfit Bat", hp: 18, speed: 2.1, color: "#b48aff", dmg: 7, w: 48, h: 28 },
-    mimic: { name: "False Positive Mimic", hp: 34, speed: 1.5, color: "#ff9f79", dmg: 11, w: 55, h: 50 },
-  }[type];
-
-  enemies.push({
-    ...base,
-    type,
-    x,
-    y: world.floorY - base.h,
-    vx: Math.random() < 0.5 ? -1 : 1,
-    hitFlash: 0,
-  });
+function makeEnemy(x, type) {
+  const types = {
+    slime: { name: "Noisy Data Slime", hp: 40, dmg: 9, speed: 1.4, w: 58, h: 44, c1: "#81ffd6", c2: "#48d8a8" },
+    mimic: { name: "False Positive Mimic", hp: 55, dmg: 12, speed: 1.2, w: 60, h: 60, c1: "#ffd29a", c2: "#f09c5a" },
+    bat: { name: "Overfit Bat", hp: 34, dmg: 10, speed: 2.1, w: 52, h: 32, c1: "#caadff", c2: "#8669db" },
+  };
+  const t = types[type];
+  enemies.push({ ...t, type, x, y: world.floor - t.h, dir: Math.random() > 0.5 ? 1 : -1, flash: 0, phase: Math.random() * 9 });
 }
 
-for (let x = 460; x < world.width - 300; x += 340) spawnEnemy(x);
+function seedEnemies() {
+  enemies.length = 0;
+  const seq = ["slime", "bat", "mimic", "slime", "bat", "mimic", "slime", "bat", "mimic"];
+  for (let i = 0; i < seq.length; i++) makeEnemy(520 + i * 320, seq[i]);
+}
+seedEnemies();
 
 addEventListener("keydown", (e) => {
-  keys.add(e.key.toLowerCase());
-
-  if ([" ", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(e.key.toLowerCase())) {
-    e.preventDefault();
-  }
-
-  if (e.key.toLowerCase() === "j") attack();
-  if (e.key.toLowerCase() === "h") heal();
-  if (e.key.toLowerCase() === "r") restart();
+  const key = e.key.toLowerCase();
+  keys.add(key);
+  if ([" ", "arrowleft", "arrowright", "arrowup"].includes(key)) e.preventDefault();
+  if (key === "j") basicAttack();
+  if (key === "k") skillAttack();
+  if (key === "h") usePotion();
+  if (key === "r") restart();
 });
-
 addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
-
-function heal() {
-  if (player.potions <= 0 || player.hp <= 0) return;
-  player.potions -= 1;
-  player.hp = Math.min(player.maxHp, player.hp + 40);
-  burst(player.x + player.w / 2, player.y + player.h / 3, "#7bffd9", 18);
-}
-
-function attack() {
-  if (player.attackCooldown > 0 || player.hp <= 0) return;
-  player.attackCooldown = 18;
-
-  const range = {
-    x: player.facing === 1 ? player.x + player.w : player.x - 55,
-    y: player.y + 10,
-    w: 55,
-    h: 42,
-  };
-
-  enemies.forEach((enemy) => {
-    if (overlap(range, enemy)) {
-      enemy.hp -= 12 + player.level * 2;
-      enemy.hitFlash = 5;
-      burst(enemy.x + enemy.w / 2, enemy.y + enemy.h / 2, "#fff5aa", 10);
-      if (enemy.hp <= 0) {
-        gainXp(26);
-        burst(enemy.x + enemy.w / 2, enemy.y + enemy.h / 2, "#9fe2ff", 22);
-      }
-    }
-  });
-}
-
-function gainXp(amount) {
-  player.xp += amount;
-  if (player.xp < player.xpNeed) return;
-
-  player.level += 1;
-  player.xp -= player.xpNeed;
-  player.xpNeed = Math.floor(player.xpNeed * 1.28);
-  player.maxHp += 14;
-  player.hp = player.maxHp;
-  player.potions += 1;
-  player.role = roles[Math.min(roles.length - 1, Math.floor((player.level - 1) / 2))];
-
-  burst(player.x + player.w / 2, player.y, "#ffd45c", 30);
-}
 
 function overlap(a, b) {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 }
 
-function applyPlatformCollision(entity) {
-  entity.onGround = false;
-
-  const floorTop = world.floorY - entity.h;
-  if (entity.y >= floorTop) {
-    entity.y = floorTop;
-    entity.vy = 0;
-    entity.onGround = true;
+function spawnBurst(x, y, color, count = 16, power = 5) {
+  for (let i = 0; i < count; i++) {
+    particles.push({ x, y, vx: (Math.random() - 0.5) * power, vy: (Math.random() - 0.5) * power, life: 24 + Math.random() * 12, color });
   }
+}
 
+function gainXP(v) {
+  player.xp += v;
+  while (player.xp >= player.xpNeed) {
+    player.xp -= player.xpNeed;
+    player.level += 1;
+    player.xpNeed = Math.floor(player.xpNeed * 1.25);
+    player.maxHp += 12;
+    player.hp = player.maxHp;
+    player.potions += 1;
+    player.role = roles[Math.min(roles.length - 1, Math.floor((player.level - 1) / 2))];
+    spawnBurst(player.x + player.w / 2, player.y + 20, "#ffdf74", 30, 7);
+  }
+}
+
+function basicAttack() {
+  if (player.attackCD > 0 || player.hp <= 0 || done) return;
+  player.attackCD = 16;
+  const hit = { x: player.facing > 0 ? player.x + player.w : player.x - 64, y: player.y + 18, w: 64, h: 50 };
+  enemies.forEach((e) => {
+    if (!overlap(hit, e)) return;
+    e.hp -= 14 + player.level * 2;
+    e.flash = 5;
+    spawnBurst(e.x + e.w / 2, e.y + e.h / 2, "#fff4b2", 12, 4);
+    if (e.hp <= 0) {
+      gainXP(32);
+      spawnBurst(e.x + e.w / 2, e.y + e.h / 2, "#95e8ff", 24, 7);
+    }
+  });
+}
+
+function skillAttack() {
+  if (player.skillCD > 0 || player.hp <= 0 || done) return;
+  player.skillCD = 80;
+  const range = { x: player.x - 60, y: player.y - 20, w: player.w + 120, h: player.h + 40 };
+  enemies.forEach((e) => {
+    if (!overlap(range, e)) return;
+    e.hp -= 24 + player.level * 3;
+    e.flash = 8;
+    spawnBurst(e.x + e.w / 2, e.y + e.h / 2, "#8ff5ff", 18, 6);
+    if (e.hp <= 0) gainXP(40);
+  });
+}
+
+function usePotion() {
+  if (player.potions <= 0 || player.hp <= 0 || done) return;
+  player.potions -= 1;
+  player.hp = Math.min(player.maxHp, player.hp + 46);
+  spawnBurst(player.x + player.w / 2, player.y + 30, "#7fffd8", 20, 6);
+}
+
+function groundCollide(body) {
+  body.onGround = false;
+  const floorY = world.floor - body.h;
+  if (body.y >= floorY) {
+    body.y = floorY;
+    body.vy = 0;
+    body.onGround = true;
+  }
   world.platforms.forEach((p) => {
-    const standing = entity.x + entity.w > p.x && entity.x < p.x + p.w;
-    const fallingOnto = entity.y + entity.h <= p.y + entity.vy + 3 && entity.y + entity.h + entity.vy >= p.y;
-    if (standing && fallingOnto && entity.vy >= 0) {
-      entity.y = p.y - entity.h;
-      entity.vy = 0;
-      entity.onGround = true;
+    const withinX = body.x + body.w > p.x && body.x < p.x + p.w;
+    const fallingOn = body.y + body.h <= p.y + body.vy + 3 && body.y + body.h + body.vy >= p.y;
+    if (withinX && fallingOn && body.vy >= 0) {
+      body.y = p.y - body.h;
+      body.vy = 0;
+      body.onGround = true;
     }
   });
 }
 
 function updatePlayer() {
-  if (player.hp <= 0) {
-    player.vx = 0;
-    return;
-  }
-
+  if (player.hp <= 0) return;
   player.vx = 0;
   if (keys.has("a") || keys.has("arrowleft")) {
     player.vx = -player.speed;
@@ -181,7 +174,6 @@ function updatePlayer() {
     player.vx = player.speed;
     player.facing = 1;
   }
-
   if ((keys.has("w") || keys.has(" ") || keys.has("arrowup")) && player.onGround) {
     player.vy = player.jump;
     player.onGround = false;
@@ -190,71 +182,48 @@ function updatePlayer() {
   player.vy += world.gravity;
   player.x = Math.max(0, Math.min(world.width - player.w, player.x + player.vx));
   player.y += player.vy;
+  groundCollide(player);
 
-  applyPlatformCollision(player);
-
-  if (player.attackCooldown > 0) player.attackCooldown -= 1;
-  if (player.hitCooldown > 0) player.hitCooldown -= 1;
+  if (player.attackCD > 0) player.attackCD--;
+  if (player.skillCD > 0) player.skillCD--;
+  if (player.hurtCD > 0) player.hurtCD--;
 }
 
 function updateEnemies() {
-  for (const enemy of enemies) {
-    enemy.x += enemy.vx * enemy.speed;
+  enemies.forEach((e) => {
+    e.phase += 0.08;
+    e.x += e.dir * e.speed;
+    if (e.x < 20 || e.x > world.width - e.w - 20) e.dir *= -1;
 
-    if (enemy.x < 10 || enemy.x > world.width - enemy.w - 10) enemy.vx *= -1;
+    if (e.type === "bat") {
+      e.y = world.floor - e.h - 45 + Math.sin(e.phase) * 22;
+    }
 
-    const ledgeLeft = enemy.x + enemy.vx * enemy.speed;
-    const willFall = !world.platforms.some((p) => ledgeLeft + enemy.w / 2 > p.x && ledgeLeft + enemy.w / 2 < p.x + p.w && enemy.y + enemy.h === p.y);
-    if (enemy.y + enemy.h === world.floorY && (enemy.x < 20 || enemy.x > world.width - 90)) enemy.vx *= -1;
-    if (willFall && enemy.type !== "bat" && enemy.y + enemy.h !== world.floorY) enemy.vx *= -1;
-
-    if (enemy.type === "bat") enemy.y += Math.sin((Date.now() + enemy.x) * 0.008) * 0.8;
-
-    if (overlap(player, enemy) && player.hitCooldown <= 0 && player.hp > 0) {
-      player.hp -= enemy.dmg;
-      player.hitCooldown = 35;
-      burst(player.x + player.w / 2, player.y + 20, "#ff8b8b", 16);
+    if (overlap(player, e) && player.hurtCD <= 0 && player.hp > 0) {
+      player.hp -= e.dmg;
+      player.hurtCD = 36;
+      spawnBurst(player.x + player.w / 2, player.y + 25, "#ff96a4", 14, 5);
       if (player.hp <= 0) {
         player.hp = 0;
-        gameOver = true;
+        done = true;
       }
     }
 
-    if (enemy.hitFlash > 0) enemy.hitFlash -= 1;
-  }
+    if (e.flash > 0) e.flash--;
+  });
 
-  for (let i = enemies.length - 1; i >= 0; i--) {
-    if (enemies[i].hp <= 0) enemies.splice(i, 1);
-  }
-
-  if (enemies.length === 0 && !gameOver) {
-    gameOver = true;
-  }
-}
-
-function burst(x, y, color, count) {
-  for (let i = 0; i < count; i++) {
-    particles.push({
-      x,
-      y,
-      vx: (Math.random() - 0.5) * 6,
-      vy: (Math.random() - 0.5) * 6,
-      life: 25 + Math.random() * 10,
-      color,
-    });
-  }
+  for (let i = enemies.length - 1; i >= 0; i--) if (enemies[i].hp <= 0) enemies.splice(i, 1);
+  if (!done && enemies.length === 0) done = true;
 }
 
 function updateParticles() {
-  for (const p of particles) {
+  particles.forEach((p) => {
     p.x += p.vx;
     p.y += p.vy;
-    p.vy += 0.08;
+    p.vy += 0.1;
     p.life -= 1;
-  }
-  for (let i = particles.length - 1; i >= 0; i--) {
-    if (particles[i].life <= 0) particles.splice(i, 1);
-  }
+  });
+  for (let i = particles.length - 1; i >= 0; i--) if (particles[i].life <= 0) particles.splice(i, 1);
 }
 
 function updateCamera() {
@@ -263,82 +232,160 @@ function updateCamera() {
   cameraX = Math.max(0, Math.min(world.width - canvas.width, cameraX));
 }
 
-function drawBackground() {
-  const t = Date.now() * 0.00005;
-  ctx.fillStyle = "#8ed4ff";
+function drawSky() {
+  const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  grad.addColorStop(0, "#9de5ff");
+  grad.addColorStop(1, "#d5f9ff");
+  ctx.fillStyle = grad;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  for (let i = 0; i < 6; i++) {
-    const x = ((i * 300 - cameraX * 0.2 + t * 100) % (canvas.width + 260)) - 130;
-    ctx.fillStyle = "rgba(255,255,255,0.65)";
-    ctx.beginPath();
-    ctx.ellipse(x, 140 + (i % 2) * 20, 95, 34, 0, 0, Math.PI * 2);
-    ctx.fill();
+  for (let i = 0; i < 8; i++) {
+    const x = ((i * 220 - cameraX * 0.23) % (canvas.width + 260)) - 100;
+    const y = 70 + (i % 3) * 35;
+    drawCloud(x, y, 1.1 + (i % 2) * 0.4);
   }
 
-  ctx.fillStyle = "#76b767";
-  ctx.fillRect(0, world.floorY + 10, canvas.width, canvas.height - world.floorY);
+  ctx.fillStyle = "#7dc462";
+  ctx.fillRect(0, world.floor + 6, canvas.width, canvas.height - world.floor);
+  ctx.fillStyle = "#9ddf84";
+  ctx.fillRect(0, world.floor - 6, canvas.width, 12);
 }
 
-function drawPlatforms() {
-  for (const p of world.platforms) {
-    const x = p.x - cameraX;
-    if (x < -p.w || x > canvas.width) continue;
-    ctx.fillStyle = "#705640";
-    ctx.fillRect(x, p.y, p.w, p.h);
-    ctx.fillStyle = "#9ed579";
-    ctx.fillRect(x, p.y - 8, p.w, 9);
-  }
-}
-
-function drawPlayer() {
-  const x = player.x - cameraX;
-  ctx.save();
-  if (player.hitCooldown > 0 && Math.floor(player.hitCooldown / 3) % 2 === 0) ctx.globalAlpha = 0.4;
-
-  ctx.fillStyle = "#1f2d3d";
-  ctx.fillRect(x + 12, player.y + 24, 28, 44);
-  ctx.fillStyle = "#eff9ff";
-  ctx.fillRect(x + 6, player.y + 20, 40, 34);
-  ctx.fillStyle = "#ffcfa7";
+function drawCloud(x, y, s = 1) {
+  ctx.fillStyle = "rgba(255,255,255,0.85)";
   ctx.beginPath();
-  ctx.arc(x + 26, player.y + 16, 14, 0, Math.PI * 2);
+  ctx.ellipse(x, y, 45 * s, 22 * s, 0, 0, Math.PI * 2);
+  ctx.ellipse(x + 35 * s, y + 6 * s, 32 * s, 18 * s, 0, 0, Math.PI * 2);
+  ctx.ellipse(x - 35 * s, y + 8 * s, 30 * s, 16 * s, 0, 0, Math.PI * 2);
   ctx.fill();
+}
 
-  ctx.fillStyle = "#40d2ff";
-  const bladeX = player.facing === 1 ? x + player.w + 8 : x - 16;
-  if (player.attackCooldown > 12) {
-    ctx.fillRect(bladeX, player.y + 24, 16, 6);
-    ctx.fillRect(bladeX + (player.facing === 1 ? 10 : -10), player.y + 22, 10, 10);
+function drawPlatform(p) {
+  const x = p.x - cameraX;
+  if (x > canvas.width || x + p.w < -40) return;
+  ctx.fillStyle = "#9c6942";
+  ctx.fillRect(x, p.y, p.w, p.h);
+  ctx.fillStyle = "#7e5233";
+  ctx.fillRect(x, p.y + 10, p.w, 10);
+  ctx.fillStyle = "#b9f087";
+  ctx.fillRect(x, p.y - 8, p.w, 10);
+}
+
+function drawHunter() {
+  const x = player.x - cameraX;
+  const y = player.y;
+  const bob = player.onGround ? 0 : Math.sin(Date.now() * 0.015) * 1.8;
+
+  ctx.save();
+  ctx.translate(x, y + bob);
+  if (player.hurtCD > 0 && Math.floor(player.hurtCD / 3) % 2 === 0) ctx.globalAlpha = 0.5;
+
+  // coat
+  ctx.fillStyle = "#f2f7ff";
+  roundRect(6, 26, 42, 56, 12, true);
+  ctx.fillStyle = "#d5e3f7";
+  roundRect(6, 26, 42, 12, 8, true);
+
+  // shirt
+  const coreGrad = ctx.createLinearGradient(0, 0, 0, 70);
+  coreGrad.addColorStop(0, "#1c3248");
+  coreGrad.addColorStop(1, "#0f2136");
+  ctx.fillStyle = coreGrad;
+  roundRect(16, 32, 24, 40, 8, true);
+
+  // head/hair/goggles
+  ctx.fillStyle = "#ffd3b0";
+  ctx.beginPath();
+  ctx.arc(28, 16, 15, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#2f1f1d";
+  ctx.beginPath();
+  ctx.arc(27, 10, 15, Math.PI, 0);
+  ctx.fill();
+  ctx.fillStyle = "#3ec9f3";
+  roundRect(16, 10, 10, 6, 2, true);
+  roundRect(29, 10, 10, 6, 2, true);
+
+  // legs/boots
+  ctx.fillStyle = "#1f2d40";
+  roundRect(16, 74, 10, 18, 4, true);
+  roundRect(30, 74, 10, 18, 4, true);
+  ctx.fillStyle = "#7d512d";
+  roundRect(12, 88, 16, 8, 3, true);
+  roundRect(28, 88, 16, 8, 3, true);
+
+  // attack effect
+  if (player.attackCD > 8 || player.skillCD > 68) {
+    ctx.strokeStyle = player.skillCD > 68 ? "#75f0ff" : "#ffce6b";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    const sx = player.facing > 0 ? 52 : 4;
+    ctx.arc(sx, 46, player.skillCD > 68 ? 36 : 24, -0.8, 0.8);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function drawCompanion(x, y, type) {
+  ctx.save();
+  ctx.translate(x - cameraX, y);
+  if (type === "solvy") {
+    const g = ctx.createRadialGradient(20, 20, 3, 20, 20, 24);
+    g.addColorStop(0, "#afffff");
+    g.addColorStop(1, "#51c7f2");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(20, 20, 20, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    ctx.fillStyle = "#173f7a";
+    roundRect(0, 0, 40, 32, 7, true);
+    ctx.fillStyle = "#50ddff";
+    ctx.fillRect(8, 9, 24, 14);
   }
   ctx.restore();
 }
 
-function drawEnemy(enemy) {
-  const x = enemy.x - cameraX;
+function drawEnemy(e) {
+  const x = e.x - cameraX;
+  const y = e.y;
   ctx.save();
-  if (enemy.hitFlash > 0) ctx.filter = "brightness(1.8)";
-  ctx.fillStyle = enemy.color;
+  if (e.flash > 0) ctx.filter = "brightness(1.5)";
 
-  if (enemy.type === "slime") {
+  if (e.type === "slime") {
+    const g = ctx.createLinearGradient(x, y, x, y + e.h);
+    g.addColorStop(0, e.c1);
+    g.addColorStop(1, e.c2);
+    ctx.fillStyle = g;
     ctx.beginPath();
-    ctx.ellipse(x + enemy.w / 2, enemy.y + enemy.h / 2, enemy.w / 2, enemy.h / 2, 0, 0, Math.PI * 2);
+    ctx.ellipse(x + e.w / 2, y + e.h / 2, e.w / 2, e.h / 2, 0, 0, Math.PI * 2);
     ctx.fill();
-  } else if (enemy.type === "bat") {
+  } else if (e.type === "bat") {
+    ctx.fillStyle = e.c2;
     ctx.beginPath();
-    ctx.ellipse(x + enemy.w / 2, enemy.y + enemy.h / 2, 14, 12, 0, 0, Math.PI * 2);
+    ctx.ellipse(x + e.w / 2, y + e.h / 2, 16, 12, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillRect(x + 2, enemy.y + 8, 12, 4);
-    ctx.fillRect(x + enemy.w - 14, enemy.y + 8, 12, 4);
+    ctx.fillStyle = e.c1;
+    ctx.fillRect(x + 2, y + 10, 14, 5);
+    ctx.fillRect(x + e.w - 16, y + 10, 14, 5);
   } else {
-    ctx.fillRect(x, enemy.y, enemy.w, enemy.h);
-    ctx.fillStyle = "#3f2f25";
-    ctx.fillRect(x + 8, enemy.y + 8, enemy.w - 16, 12);
+    ctx.fillStyle = e.c2;
+    roundRect(x, y, e.w, e.h, 9, true);
+    ctx.fillStyle = e.c1;
+    roundRect(x + 8, y + 10, e.w - 16, 16, 6, true);
   }
 
-  ctx.fillStyle = "#102439";
-  ctx.fillRect(x + 14, enemy.y + 12, 6, 6);
-  ctx.fillRect(x + enemy.w - 20, enemy.y + 12, 6, 6);
+  ctx.fillStyle = "#14324a";
+  ctx.fillRect(x + 16, y + 12, 6, 6);
+  ctx.fillRect(x + e.w - 22, y + 12, 6, 6);
+
+  // hp bar
+  ctx.fillStyle = "rgba(0,0,0,0.35)";
+  ctx.fillRect(x + 4, y - 10, e.w - 8, 5);
+  ctx.fillStyle = "#7dff9c";
+  ctx.fillRect(x + 4, y - 10, (e.w - 8) * Math.max(0, e.hp) / (e.type === "mimic" ? 55 : e.type === "slime" ? 40 : 34), 5);
+
   ctx.restore();
 }
 
@@ -346,65 +393,80 @@ function drawParticles() {
   particles.forEach((p) => {
     ctx.globalAlpha = Math.max(0, p.life / 30);
     ctx.fillStyle = p.color;
-    ctx.fillRect(p.x - cameraX, p.y, 4, 4);
+    ctx.beginPath();
+    ctx.arc(p.x - cameraX, p.y, 2.6, 0, Math.PI * 2);
+    ctx.fill();
   });
   ctx.globalAlpha = 1;
 }
 
-function drawLabels() {
-  ctx.fillStyle = "rgba(5, 18, 34, 0.58)";
-  ctx.fillRect(12, canvas.height - 96, 350, 82);
-  ctx.fillStyle = "#ebf8ff";
-  ctx.font = "20px Trebuchet MS";
-  if (!gameOver) {
-    ctx.fillText("Defeat all data-monsters!", 24, canvas.height - 60);
-  } else if (player.hp > 0) {
-    ctx.fillText("Stage Cleared! Press R to replay.", 24, canvas.height - 60);
-  } else {
-    ctx.fillText("Mission Failed. Press R to retry.", 24, canvas.height - 60);
-  }
+function drawStatusText() {
+  ctx.fillStyle = "rgba(10,22,42,0.7)";
+  roundRect(20, canvas.height - 74, 410, 52, 10, true);
+  ctx.fillStyle = "#eaf8ff";
+  ctx.font = "22px Trebuchet MS";
+  if (!done) ctx.fillText("Clear the map of research bottlenecks!", 35, canvas.height - 40);
+  else if (player.hp > 0) ctx.fillText("Stage Cleared! Press R for a new run.", 35, canvas.height - 40);
+  else ctx.fillText("Mission Failed. Press R to retry.", 35, canvas.height - 40);
+}
+
+function roundRect(x, y, w, h, r, fill) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  if (fill) ctx.fill();
 }
 
 function render() {
-  drawBackground();
-  drawPlatforms();
+  drawSky();
+  world.platforms.forEach(drawPlatform);
+  drawCompanion(player.x - 70, player.y + 48, "solvy");
+  drawCompanion(player.x + 78, player.y + 55, "bytee");
   enemies.forEach(drawEnemy);
-  drawPlayer();
+  drawHunter();
   drawParticles();
-  drawLabels();
+  drawStatusText();
 }
 
-function updateUI() {
+function syncUI() {
+  ui.role.textContent = player.role;
   ui.hp.textContent = `${Math.floor(player.hp)} / ${player.maxHp}`;
   ui.xp.textContent = `${player.xp} / ${player.xpNeed}`;
-  ui.level.textContent = String(player.level);
-  ui.potions.textContent = String(player.potions);
-  ui.role.textContent = player.role;
-
-  if (gameOver) ui.overlay.style.opacity = "0.25";
+  ui.level.textContent = `${player.level}`;
+  ui.potions.textContent = `${player.potions}`;
+  ui.controls.style.opacity = done ? "0.35" : "1";
 }
 
 function restart() {
   player.x = 120;
-  player.y = 100;
+  player.y = 160;
   player.vx = 0;
   player.vy = 0;
   player.hp = player.maxHp;
   player.potions = Math.max(3, player.potions);
-  player.hitCooldown = 0;
-  gameOver = false;
-  enemies.length = 0;
-  for (let x = 460; x < world.width - 300; x += 340) spawnEnemy(x);
+  player.attackCD = 0;
+  player.skillCD = 0;
+  player.hurtCD = 0;
+  done = false;
+  seedEnemies();
+  particles.length = 0;
 }
 
-function loop() {
+function tick() {
   updatePlayer();
-  if (!gameOver) updateEnemies();
+  if (!done) updateEnemies();
   updateParticles();
   updateCamera();
   render();
-  updateUI();
-  requestAnimationFrame(loop);
+  syncUI();
+  requestAnimationFrame(tick);
 }
 
-loop();
+tick();

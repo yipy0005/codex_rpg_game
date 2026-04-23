@@ -1,21 +1,21 @@
-# Computational Drug Hunter — Maple-Style Web RPG
+# Computational Drug Hunter RPG (Maple-inspired visual style)
 
-This project is now a visual, side-scrolling action RPG prototype (not text-driven) inspired by MapleStory-style platform combat and the computational drug hunter theme.
+This version focuses on a brighter, anime/chibi presentation inspired by the uploaded poster:
+
+- Banner + panel-driven UI similar to the reference card style
+- Cute character and companions rendered in layered cartoon shapes
+- Colorful enemy sprites with HP bars, particle hits, and skill arcs
+- Side-scrolling stage with clouds, platforms, and action controls
 
 ## Run
 
-Open `index.html` in any modern browser.
+Open `index.html` in a modern browser.
 
 ## Controls
 
-- Move: `A` / `D` or `←` / `→`
-- Jump: `W` / `Space`
-- Attack: `J`
-- Heal (potion): `H`
-- Restart run: `R`
-
-## Gameplay loop
-
-- Traverse the map and platform sections.
-- Defeat animated enemy types (Noisy Data Slime, Overfit Bat, False Positive Mimic).
-- Gain XP, level up, and progress your role from Data Explorer to Lead Discovery Master.
+- `A/D` or `←/→`: Move
+- `W` or `Space`: Jump
+- `J`: Basic attack
+- `K`: Skill attack
+- `H`: Heal potion
+- `R`: Restart stage
